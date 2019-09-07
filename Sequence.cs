@@ -15,65 +15,90 @@
 */
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using Commons.Music.Midi;
 
 namespace Synth {
     public class Sequence {
         public Instrument Instrument { get; }
         public List<Note> Notes { get; } = new List<Note>();
 
-        private Regex noteRegEx = new Regex(@"([a-g]{1}[\#b]?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private Regex octaveRegEx = new Regex(@"(\-?[0-9]+$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        /// <summary>
+        /// The total length of the note sequence in seconds.
+        /// </summary>
+        public double TotalLength { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="instrument">Defines the sound and the ADSR envelope.</param>
-        /// <param name="notes">Example: "C0:0:0.5, C1:0.5:0.5, D#-1:1:0.5, Gb0:1.5:0.5"</param>
-        public Sequence(Instrument instrument, string notes) {
+        /// <param name="midiFilePath">Path to a MIDI file to read its contents.</param>
+        /// <param name="filterChannel">Filter on a specific channel. Use -1 to disable filtering.</param>
+        /// <param name="tempoChange">Multiplier for the tempo. 1 = unchanged</param>
+        public Sequence(Instrument instrument, string midiFilePath, int filterChannel, double tempoChange) {
             this.Instrument = instrument;
-            var parts = notes.Split(',');
-            var lookup = new Dictionary<string, int> {
-                {"c", 0}, {"c#", 1}, {"db", 1}, {"d", 2}, {"d#", 3}, {"eb", 3}, {"e", 4}, {"fb", 4}, {"e#", 5}, {"f", 5},
-                {"f#", 6}, {"gb", 6}, {"g", 7}, {"g#", 8}, {"ab", 8}, {"a", 9}, {"a#", 10}, {"bb", 10}, {"b", 11}, {"cb", 11}
-            };
 
-            foreach(var part in parts) {
-                if (part.Trim() == "") {
-                    continue;
-                }
-                
-                var props = part.Trim().Split(':');
+            using(var stream = System.IO.File.OpenRead(midiFilePath)) {
+                var music = MidiMusic.Read(stream);
+                double timeConversion = (((double)music.GetTimePositionInMillisecondsForTick(1000)) / (1000000d)) * tempoChange;
 
-                if (props.Length != 3) {
-                    throw(new Exception($"Invalid note description: {part.Trim()}"));
-                }
+                foreach(var track in music.Tracks) {
+                    var tracker = new Dictionary<byte, Note>();
+                    double currentTime = 0;
 
-                var matches = noteRegEx.Matches(props[0]);
-                if (matches.Count != 1) {
-                    throw(new Exception($"Invalid note description: {part.Trim()}"));
-                }
+                    foreach(var message in track.Messages) {
+                        var type = message.Event.EventType >> 4;
 
-                var noteStr = matches[0].ToString().ToLower();
-                if (!lookup.ContainsKey(noteStr)) {
-                    throw(new Exception($"Invalid note description: {part.Trim()}"));
-                }
+                        if (type != 8 && type != 9) {
+                            continue;
+                        }
 
-                var note = lookup[noteStr];
+                        var channel = message.Event.EventType & 0x04;
 
-                matches = octaveRegEx.Matches(props[0]);
-                if (matches.Count != 1) {
-                    throw(new Exception($"Invalid note description: {part.Trim()}"));
-                }
+                        if (filterChannel > -1) {
+                            if (filterChannel != channel) {
+                                continue;
+                            }
+                        }
 
-                try {
-                    var octave = Int16.Parse(matches[0].ToString());
-                    var time = Double.Parse(props[1]);
-                    var length = Double.Parse(props[2]);
+                        if (channel == 10) {
+                            // Automatically filter the percussion channel
+                            continue;
+                        }
 
-                    Notes.Add(new Note(instrument.Tuning.getFrequency(octave, note), time, length));
-                } catch (Exception) {
-                    throw(new Exception($"Invalid note description: {part.Trim()}"));
+                        currentTime += ((double)message.DeltaTime) * timeConversion;
+                        
+                        byte note = message.Event.Msb;
+                        byte velocity = message.Event.Lsb;
+
+                        if (type == 8 || (type == 9 && velocity == 0)) {
+                            // Note OFF event
+
+                            if (!tracker.ContainsKey(note)) {
+                                // Ignore inconsistent data
+                                continue;
+                            }
+
+                            var noteObj = tracker[note];
+                            noteObj.SustainLength = currentTime - noteObj.StartTime;
+                            Notes.Add(noteObj);
+                            tracker.Remove(note);
+
+                            var endTime = noteObj.StartTime + instrument.MinimalNoteLength + noteObj.SustainLength + 1;
+                            if (endTime > TotalLength) {
+                                TotalLength = endTime;
+                            }
+
+                            continue;
+                        }
+
+                        if (type == 9) {
+                            // Note ON event
+                            double frequency = instrument.Tuning.getFrequency(note / 12 - 5, note % 12);
+                            tracker[note] = new Note(frequency, currentTime, ((double)velocity) / 127d, 0);
+
+                            continue;
+                        }
+                    }
                 }
             }
         }

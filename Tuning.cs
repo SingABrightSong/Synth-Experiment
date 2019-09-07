@@ -29,7 +29,7 @@ namespace Synth {
         /// Type of the tuning.
         /// </summary>
         public enum Scale : int {
-            Ptolemyc = 1,
+            Ptolemaic = 1,
             Chromatic_12 = 2
         }
 
@@ -41,7 +41,7 @@ namespace Synth {
             this.ScaleType = scale;
             this.BaseFrequency = baseFrequency;
 
-            if (scale == Scale.Ptolemyc) {
+            if (scale == Scale.Ptolemaic) {
                 frequencyRatios = new double[12] { 1d, 0, 9d/8d, 0, 5d/4d, 4d/3d, 0, 3d/2d, 0, 5d/3d, 0, 15d/8d };
             } else {
                 /*

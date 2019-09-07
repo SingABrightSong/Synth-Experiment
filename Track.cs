@@ -63,12 +63,12 @@ namespace Synth {
             foreach (var seq in sequences) {
                 foreach(var note in seq.Notes) {
                     double start = delay + note.StartTime;
-                    double noteLength = seq.Instrument.FullExtension + note.SustainLength;
+                    double noteLength = seq.Instrument.MinimalNoteLength + note.SustainLength;
                     int sampleCount = (int)Math.Ceiling(noteLength / r1);
                     int startPos = (int)(start / r1);
 
                     for (int i = 0; i < sampleCount; i++) {
-                        if (i >= soundBuffer.Length) {
+                        if (i + startPos >= soundBuffer.Length) {
                             break;
                         }
 
@@ -99,7 +99,7 @@ namespace Synth {
 
         /// <summary>
         /// Finds the maximum and minimum values of this track, to
-        /// normalize its output between 0.02 and 0.98.
+        /// normalize its output.
         /// </summary>
         public void Normalize() {
             if (soundBuffer == null) {
@@ -119,20 +119,19 @@ namespace Synth {
                 }
             }
 
-            double scale = 1d / (max - min);
+            double scale = 0.95 / Math.Max(max, Math.Abs(min));
 
             for (int i = 0; i < soundBuffer.Length; i++) {
-                soundBuffer[i] = (soundBuffer[i] - min) * scale;
+                soundBuffer[i] = soundBuffer[i] * scale;
             }
         }
 
         /// <summary>
         /// Add a new sequence of notes.
         /// </summary>
-        /// <param name="instrument">Defines the sound and the ADSR envelope.</param>
-        /// <param name="notes">Example: "C0:0:0.5, C1:0.5:0.5, D#-1:1:0.5, Gb0:1.5:0.5"</param>
-        public void AddSequence(Instrument instrument, string notes) {
-            sequences.Add(new Sequence(instrument, notes));
+        /// <param name="seq">A sequence of notes.</param>
+        public void AddSequence(Sequence seq) {
+            sequences.Add(seq);
         }
     }
 }

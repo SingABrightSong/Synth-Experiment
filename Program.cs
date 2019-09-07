@@ -23,19 +23,17 @@ namespace Synth {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
             var instrument1 = new Instrument(
-                new Tuning(Tuning.Scale.Ptolemyc, 440),
+                new Tuning(Tuning.Scale.Chromatic_12, 440),
                 attack: 0.04, decay: 0.2, sustainLevel: 0.6, release: 0.3,
                 (double time, double frequency) => Waveform.Sine(time, frequency)
             );
 
             var track = new Track(Track.SampleRateValue.R_44100_Hz);
 
-            track.AddSequence(
-                instrument1,
-                "C0:0:0.7, D0:1:0.7, E0:2:0.7, F0:3:0.7, G0:4:0.7, A0:5:0.7, B0:6:0.7, C1:7:0.7"
-            );
+            var seq = new Sequence(instrument1, "mysong4.mid", filterChannel: -1, tempoChange: 1);
+            track.AddSequence(seq);
 
-            track.Render(0.7, 10);
+            track.Render(0.7, seq.TotalLength);
             track.SaveAsWavFile("sine_test.wav");
         }
     }

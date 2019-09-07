@@ -19,11 +19,13 @@ namespace Synth {
     public class Note {
         public double Frequency { get; set; }
         public double StartTime { get; set; }
+        public double Velocity { get; set; }
         public double SustainLength { get; set; }
-
-        public Note(double frequency, double startTime, double sustainLength) {
+        
+        public Note(double frequency, double startTime, double velocity, double sustainLength) {
             this.Frequency = frequency;
             this.StartTime = startTime;
+            this.Velocity = velocity;
             this.SustainLength = sustainLength;
         }
     }
