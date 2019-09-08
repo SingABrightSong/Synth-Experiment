@@ -92,6 +92,10 @@ namespace Synth {
             return Math.Sin(time * frequency * Math.PI * 2d);
         }
 
+        public static double SemiSine(double time, double frequency) {
+            return Math.Abs(Math.Sin(time * frequency * Math.PI)) * 2d - 1d;
+        }
+
         public static double Square(double time, double frequency) {
             return ((int)(time * frequency) % 2) * 2 - 1;
         }
@@ -105,6 +109,18 @@ namespace Synth {
 
         public static double Noise() {
             return RND.NextDouble() * 2 - 1;
+        }
+
+        public static double Triangle(double time, double frequency) {
+            var phase = (int)(time * frequency) % 2;
+            var periods = time * frequency;
+            var fractional = periods - Math.Floor(periods);
+
+            if (phase == 0) {
+                return fractional * 2 - 1;
+            }
+
+            return (1 - fractional) * 2 - 1;
         }
     }
 }

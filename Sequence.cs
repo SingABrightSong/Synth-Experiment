@@ -34,7 +34,8 @@ namespace Synth {
         /// <param name="midiFilePath">Path to a MIDI file to read its contents.</param>
         /// <param name="filterChannel">Filter on a specific channel. Use -1 to disable filtering.</param>
         /// <param name="tempoChange">Multiplier for the tempo. 1 = unchanged</param>
-        public Sequence(Instrument instrument, string midiFilePath, int filterChannel, double tempoChange) {
+        /// <param name="lengthChange">Multiplier for the note lengths. 1 = unchanged</param>
+        public Sequence(Instrument instrument, string midiFilePath, int filterChannel, double tempoChange, double lengthChange) {
             this.Instrument = instrument;
 
             using(var stream = System.IO.File.OpenRead(midiFilePath)) {
@@ -79,7 +80,7 @@ namespace Synth {
                             }
 
                             var noteObj = tracker[note];
-                            noteObj.SustainLength = currentTime - noteObj.StartTime - instrument.MinimalNoteLength;
+                            noteObj.SustainLength = (currentTime - noteObj.StartTime) * lengthChange;
                             Notes.Add(noteObj);
                             tracker.Remove(note);
 

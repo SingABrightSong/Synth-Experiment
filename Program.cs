@@ -24,17 +24,17 @@ namespace Synth {
 
             var instrument1 = new Instrument(
                 new Tuning(Tuning.Scale.Chromatic_12, 440),
-                attack: 0.04, decay: 0.2, sustainLevel: 0.5, release: 0.5,
+                attack: 0.02, decay: 0.1, sustainLevel: 0.5, release: 0.4,
                 (double time, double frequency) =>
-                    3 * Waveform.Square(time, frequency) +
-                    2 * Waveform.Sawtooth(time, frequency) +
-                    0.1 * Waveform.Sine(time, frequency) +
-                    0.2 * Waveform.Noise()
+                    2d * Waveform.Triangle(time, frequency) * (frequency / 400d) +
+                    1d * Waveform.SemiSine(time, frequency) +
+                    0.5d * Waveform.Square(time, frequency) * (400d / frequency) +
+                    0.09d * Waveform.Noise()
             );
 
             var track = new Track(Track.SampleRateValue.R_44100_Hz);
 
-            var seq = new Sequence(instrument1, "data/test.mid", filterChannel: -1, tempoChange: 1);
+            var seq = new Sequence(instrument1, "data/test.mid", filterChannel: -1, tempoChange: 1, lengthChange: 0.7);
             track.AddSequence(seq);
 
             track.Render(0.7, seq.TotalLength);
