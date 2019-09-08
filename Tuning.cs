@@ -65,13 +65,15 @@ namespace Synth {
         /// Returns the frequency of a note
         /// </summary>
         /// <param name="note">MIDI note number</param>
+        /// <param name="octaveShift">Shift the octave. 0 = no change.</param>
         /// <returns>Frequency of a note in Hz</returns>
-        public double getFrequency(int midiNoteNumber) {
+        public double getFrequency(int midiNoteNumber, int octaveShift) {
             int note = (midiNoteNumber - BaseNote) % 12;
-            int octave = (midiNoteNumber - BaseNote) / 12;
+            int octave = (midiNoteNumber - BaseNote) / 12 + octaveShift;
 
             if (note < 0) {
                 note = 12 + note;
+                octave--;
             }
 
             if (octave == 0) {

@@ -28,15 +28,38 @@ namespace Synth {
         public double TotalLength { get; }
 
         /// <summary>
+        /// Stereo panning, from -1 to 1. -1 = left, 1 = right.
+        /// </summary>
+        public double StereoPan { get; }
+
+        /// <summary>
+        /// Multiplier for the volume. 1 = unchanged
+        /// </summary>
+        public double VolumeChange { get; }
+
+        /// <summary>
+        /// Shift the sequence by this amount of octaves
+        /// </summary>
+        public int OctaveShift { get; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="instrument">Defines the sound and the ADSR envelope.</param>
         /// <param name="midiFilePath">Path to a MIDI file to read its contents.</param>
         /// <param name="filterChannel">Filter on a specific channel. Use -1 to disable filtering.</param>
+        /// <param name="steroPan">Stereo panning, from -1 to 1.</param>
         /// <param name="tempoChange">Multiplier for the tempo. 1 = unchanged</param>
         /// <param name="lengthChange">Multiplier for the note lengths. 1 = unchanged</param>
-        public Sequence(Instrument instrument, string midiFilePath, int filterChannel, double tempoChange, double lengthChange) {
+        /// <param name="volumeChange">Multiplier for the volume. 1 = unchanged</param>
+        /// <param name="octaveShift">Shift the sequence by this amount of octaves. No change = 0</param>
+        public Sequence(Instrument instrument, string midiFilePath, int filterChannel = -1, double steroPan = 0, double tempoChange = 1,
+                double lengthChange = 1, double volumeChange = 1, int octaveShift = 0) {
+
             this.Instrument = instrument;
+            this.StereoPan = steroPan;
+            this.VolumeChange = volumeChange;
+            this.OctaveShift = octaveShift;
 
             using(var stream = System.IO.File.OpenRead(midiFilePath)) {
                 var music = MidiMusic.Read(stream);
@@ -92,7 +115,7 @@ namespace Synth {
 
                         if (type == 9) {
                             // Note ON event
-                            double frequency = instrument.Tuning.getFrequency(note);
+                            double frequency = instrument.Tuning.getFrequency(note, OctaveShift);
                             tracker[note] = new Note(frequency, currentTime, ((double)velocity) / 127d, 0);
 
                             continue;

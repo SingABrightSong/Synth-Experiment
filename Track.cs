@@ -21,7 +21,8 @@ namespace Synth {
         /// <summary>
         /// Buffer for accumulating the sound samples.
         /// </summary>
-        private double[] soundBuffer = null;
+        private double[] soundBufferLeft = null;
+        private double[] soundBufferRight = null;
 
         /// <summary>
         /// The sample rate of the underlying buffer.
@@ -56,9 +57,10 @@ namespace Synth {
         /// <param name="delay"></param>
         /// <param name="length"></param>
         public void Render(double delay, double length) {
-            int samples = (int)Math.Ceiling(length * (int)SampleRate);
+            int samples = (int)Math.Ceiling((length + delay) * (int)SampleRate);
             double r1 = 1D / (double)SampleRate;
-            soundBuffer = new double[samples];
+            soundBufferLeft = new double[samples];
+            soundBufferRight = new double[samples];
             
             foreach (var seq in sequences) {
                 foreach(var note in seq.Notes) {
@@ -68,11 +70,15 @@ namespace Synth {
                     int startPos = (int)(start / r1);
 
                     for (int i = 0; i < sampleCount; i++) {
-                        if (i + startPos >= soundBuffer.Length) {
+                        if (i + startPos >= soundBufferLeft.Length) {
                             break;
                         }
 
-                        soundBuffer[i + startPos] += seq.Instrument.Play(i * r1, note.Frequency, note.SustainLength) * note.Velocity;
+                        var value = seq.Instrument.Play(i * r1, note.Frequency, note.SustainLength) * note.Velocity * seq.VolumeChange;
+                        var pan = (seq.StereoPan + 1) * 0.5d;
+
+                        soundBufferLeft[i + startPos] += value * (1d - pan);
+                        soundBufferRight[i + startPos] += value * pan;
                     }
                 }
             }
@@ -83,25 +89,36 @@ namespace Synth {
         /// </summary>
         /// <param name="path">Destination file path</param>
         public void SaveAsWavFile(string path) {
-            if (soundBuffer == null) {
-                return;
+            if (soundBufferLeft == null || soundBufferRight == null) {
+                throw new Exception("Track.SaveAsWavFile(): Empty buffer");
             }
 
-            Normalize();
-            var buffer = new Int16[soundBuffer.Length];
+            Normalize(soundBufferLeft);
+            Normalize(soundBufferRight);
 
-            for (int i = 0; i < soundBuffer.Length; i++) {
-                buffer[i] = (Int16)(32256d * soundBuffer[i]);
+            WavFile.saveFile(
+                path,
+                toIntBuffer(soundBufferLeft),
+                toIntBuffer(soundBufferRight),
+                SampleRate
+            );
+        }
+
+        private Int16[] toIntBuffer(double[] samples) {
+            var buffer = new Int16[samples.Length];
+
+            for (int i = 0; i < samples.Length; i++) {
+                buffer[i] = (Int16)(32256d * samples[i]);
             }
 
-            WavFile.saveFile(path, buffer, SampleRate);
+            return buffer;
         }
 
         /// <summary>
         /// Finds the maximum and minimum values of this track, to
         /// normalize its output.
         /// </summary>
-        public void Normalize() {
+        public void Normalize(double[] soundBuffer) {
             if (soundBuffer == null) {
                 return;
             }

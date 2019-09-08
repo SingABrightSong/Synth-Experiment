@@ -22,16 +22,16 @@ namespace Synth {
         public static void Main() {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
-            var tuning = new Tuning(Tuning.Scale.Chromatic_12, 280, 53);
+            var tuning = new Tuning(Tuning.Scale.Ptolemaic, 280, 53);
 
             var lead = new Instrument(
                 tuning,
-                attack: 0.02, decay: 0.1, sustainLevel: 0.5, release: 0.4,
+                attack: 0.05, decay: 0.1, sustainLevel: 0.5, release: 0.4,
                 (double time, double frequency) =>
                     (
                         3d * Waveform.Triangle(time, frequency) +
                         2d * Waveform.Triangle(time, frequency + 1.8d) +
-                        1d * Waveform.Triangle(time, frequency + 2.9d) +
+                        0.8d * Waveform.Triangle(time, frequency * 2d + 0.8d) +
                         0.5d * Waveform.Triangle(time, frequency + 3.8d)
                     ) +
                     0.02d * Waveform.Noise()
@@ -39,7 +39,7 @@ namespace Synth {
 
             var crystal = new Instrument(
                 tuning,
-                attack: 0.02, decay: 0.1, sustainLevel: 0.5, release: 0.4,
+                attack: 0.05, decay: 0.1, sustainLevel: 0.5, release: 0.4,
                 (double time, double frequency) =>
                     (
                         3d * Waveform.SemiSine(time, frequency) +
@@ -52,16 +52,16 @@ namespace Synth {
 
             var synthBass = new Instrument(
                 tuning,
-                attack: 0.02, decay: 0.1, sustainLevel: 0.5, release: 0.4,
+                attack: 0.05, decay: 0.1, sustainLevel: 0.5, release: 0.4,
                 (double time, double frequency) =>
                     (
-                        3d * Waveform.Triangle(time, frequency) +
+                        3d * Waveform.Triangle(time, frequency - 0.2d) +
                         2d * Waveform.Triangle(time, frequency + 0.7d) +
                         1d * Waveform.Triangle(time, frequency + 1.5d) +
                         0.5d * Waveform.Triangle(time, frequency + 2.2d)
-                    ) * (frequency / 400d) +
+                    ) * (frequency / tuning.BaseFrequency) +
                     (
-                        3d * Waveform.Sawtooth(time, frequency) +
+                        3d * Waveform.Sawtooth(time, frequency - 0.2d) +
                         2d * Waveform.Sawtooth(time, frequency + 0.9d) +
                         1d * Waveform.Sawtooth(time, frequency + 1.8d) +
                         0.5d * Waveform.Sawtooth(time, frequency + 2.7d)
@@ -71,9 +71,12 @@ namespace Synth {
 
             var track = new Track(Track.SampleRateValue.R_44100_Hz);
 
-            var Superius = new Sequence(lead, "data/Pavane_dAngleterre.mid", filterChannel: 0, tempoChange: 1, lengthChange: 0.7);
-            var Tenor = new Sequence(crystal, "data/Pavane_dAngleterre.mid", filterChannel: 1, tempoChange: 1, lengthChange: 0.7);
-            var Bass = new Sequence(synthBass, "data/Pavane_dAngleterre.mid", filterChannel: 2, tempoChange: 1, lengthChange: 0.7);
+            var Superius = new Sequence(lead, "data/Pavane_dAngleterre.mid", filterChannel: 0, steroPan: -0.4,
+                tempoChange: 0.95, lengthChange: 0.7, volumeChange: 0.8, octaveShift: 0);
+            var Tenor = new Sequence(crystal, "data/Pavane_dAngleterre.mid", filterChannel: 1, steroPan: 0.4,
+                tempoChange: 0.95, lengthChange: 0.7, volumeChange: 1.4, octaveShift: 0);
+            var Bass = new Sequence(synthBass, "data/Pavane_dAngleterre.mid", filterChannel: 2, steroPan: 0.2,
+                tempoChange: 0.95, lengthChange: 0.7, volumeChange: 2.5, octaveShift: 0);
 
             track.AddSequence(Superius);
             track.AddSequence(Tenor);

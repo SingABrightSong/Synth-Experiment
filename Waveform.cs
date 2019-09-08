@@ -92,12 +92,30 @@ namespace Synth {
             return Math.Sin(time * frequency * Math.PI * 2d);
         }
 
+        public static double Cosine(double time, double frequency) {
+            return Math.Cos(time * frequency * Math.PI * 2d);
+        }
+
         public static double SemiSine(double time, double frequency) {
             return Math.Abs(Math.Sin(time * frequency * Math.PI)) * 2d - 1d;
         }
 
-        public static double Square(double time, double frequency) {
-            return ((int)(time * frequency) % 2) * 2 - 1;
+        /// <summary>
+        /// Square waveform
+        /// </summary>
+        /// <param name="time">Time elapsed (in seconds) from the beginning of the note.</param>
+        /// <param name="frequency">The wave's frequency.</param>
+        /// <param name="skew">Value from -1 to 1, to skew the shape of the wave.</param>
+        /// <returns></returns>
+        public static double Square(double time, double frequency, double skew = 0) {
+            double period = time * frequency;
+            double t = period - Math.Floor(period);
+
+            if (t >= (1 + skew) * 0.5) {
+                return 1;
+            }
+
+            return -1;
         }
 
         public static double Sawtooth(double time, double frequency) {
@@ -112,15 +130,18 @@ namespace Synth {
         }
 
         public static double Triangle(double time, double frequency) {
-            var phase = (int)(time * frequency) % 2;
             var periods = time * frequency;
-            var fractional = periods - Math.Floor(periods);
+            var t = periods - Math.Floor(periods);
 
-            if (phase == 0) {
-                return fractional * 2 - 1;
+            if (t >= 0.75d) {
+                return (t - 0.75d) * 4d - 1d;
+            } else if (t >= 0.5) {
+                return - (t - 0.5d) * 4d;
+            } else if (t >= 0.25) {
+                return 1d - (t - 0.5d) * 4d;
             }
 
-            return (1 - fractional) * 2 - 1;
+            return t * 4d;
         }
     }
 }
