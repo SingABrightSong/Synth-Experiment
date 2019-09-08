@@ -72,7 +72,7 @@ namespace Synth {
                             break;
                         }
 
-                        soundBuffer[i + startPos] += seq.Instrument.Play(i * r1, note.Frequency, note.SustainLength);
+                        soundBuffer[i + startPos] += seq.Instrument.Play(i * r1, note.Frequency, note.SustainLength) * note.Velocity;
                     }
                 }
             }

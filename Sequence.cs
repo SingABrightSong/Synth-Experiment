@@ -40,7 +40,7 @@ namespace Synth {
 
             using(var stream = System.IO.File.OpenRead(midiFilePath)) {
                 var music = MidiMusic.Read(stream);
-                double timeConversion = (((double)music.GetTimePositionInMillisecondsForTick(1000)) / (1000000d)) * tempoChange;
+                double timeConversion = (((double)music.GetTimePositionInMillisecondsForTick(1000)) / (1000000d)) / tempoChange;
 
                 foreach(var track in music.Tracks) {
                     var tracker = new Dictionary<byte, Note>();
@@ -53,15 +53,13 @@ namespace Synth {
                             continue;
                         }
 
-                        var channel = message.Event.EventType & 0x04;
-
                         if (filterChannel > -1) {
-                            if (filterChannel != channel) {
+                            if (filterChannel != message.Event.Channel) {
                                 continue;
                             }
                         }
 
-                        if (channel == 10) {
+                        if (message.Event.Channel == 10) {
                             // Automatically filter the percussion channel
                             continue;
                         }
@@ -94,7 +92,7 @@ namespace Synth {
 
                         if (type == 9) {
                             // Note ON event
-                            double frequency = instrument.Tuning.getFrequency(note / 12 - 5, note % 12);
+                            double frequency = instrument.Tuning.getFrequency(note);
                             tracker[note] = new Note(frequency, currentTime, ((double)velocity) / 127d, 0);
 
                             continue;

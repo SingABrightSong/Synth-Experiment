@@ -19,6 +19,7 @@ namespace Synth {
     public class Tuning {
         public double BaseFrequency { get; }
         public Scale ScaleType { get; }
+        public int BaseNote { get; }
 
         /// <summary>
         /// Internal array of frequency ratios per the 12 notes.
@@ -36,13 +37,16 @@ namespace Synth {
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="scale">The type of the tuning.</param>
-        public Tuning(Scale scale, double baseFrequency) {
+        /// <param name="scale">Defines frequency ratios between the notes</param>
+        /// <param name="baseFrequency">E.g.null 440 Hz</param>
+        /// <param name="baseNote">MIDI note number. This is the note which has the 'baseFrequency'</param>
+        public Tuning(Scale scale, double baseFrequency, int baseNote) {
             this.ScaleType = scale;
+            this.BaseNote = baseNote;
             this.BaseFrequency = baseFrequency;
 
             if (scale == Scale.Ptolemaic) {
-                frequencyRatios = new double[12] { 1d, 0, 9d/8d, 0, 5d/4d, 4d/3d, 0, 3d/2d, 0, 5d/3d, 0, 15d/8d };
+                frequencyRatios = new double[12] { 1d, 25d/12d, 9d/8d, 0, 5d/4d, 4d/3d, 0, 3d/2d, 25d/16d, 5d/3d, 0, 15d/8d };
             } else {
                 /*
                     Chromatic_12
@@ -60,11 +64,14 @@ namespace Synth {
         /// <summary>
         /// Returns the frequency of a note
         /// </summary>
-        /// <param name="note">Value between 0 and 11, where 0 = Do, 2 = Re, ..., 11 = Ti</param>
+        /// <param name="note">MIDI note number</param>
         /// <returns>Frequency of a note in Hz</returns>
-        public double getFrequency(int octave, int note) {
-            if (note < 0 || note > 11) {
-                throw(new Exception("Scale::getFrequency(): Invalid note value"));
+        public double getFrequency(int midiNoteNumber) {
+            int note = (midiNoteNumber - BaseNote) % 12;
+            int octave = (midiNoteNumber - BaseNote) / 12;
+
+            if (note < 0) {
+                note = 12 + note;
             }
 
             if (octave == 0) {
