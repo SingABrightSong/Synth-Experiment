@@ -24,17 +24,21 @@ namespace Synth {
 
             var instrument1 = new Instrument(
                 new Tuning(Tuning.Scale.Chromatic_12, 440),
-                attack: 0.04, decay: 0.2, sustainLevel: 0.6, release: 0.3,
-                (double time, double frequency) => Waveform.Sine(time, frequency)
+                attack: 0.04, decay: 0.2, sustainLevel: 0.5, release: 0.5,
+                (double time, double frequency) =>
+                    3 * Waveform.Square(time, frequency) +
+                    2 * Waveform.Sawtooth(time, frequency) +
+                    0.1 * Waveform.Sine(time, frequency) +
+                    0.2 * Waveform.Noise()
             );
 
             var track = new Track(Track.SampleRateValue.R_44100_Hz);
 
-            var seq = new Sequence(instrument1, "mysong4.mid", filterChannel: -1, tempoChange: 1);
+            var seq = new Sequence(instrument1, "data/test.mid", filterChannel: -1, tempoChange: 1);
             track.AddSequence(seq);
 
             track.Render(0.7, seq.TotalLength);
-            track.SaveAsWavFile("sine_test.wav");
+            track.SaveAsWavFile("data/test.wav");
         }
     }
 }

@@ -79,7 +79,7 @@ namespace Synth {
                             }
 
                             var noteObj = tracker[note];
-                            noteObj.SustainLength = currentTime - noteObj.StartTime;
+                            noteObj.SustainLength = currentTime - noteObj.StartTime - instrument.MinimalNoteLength;
                             Notes.Add(noteObj);
                             tracker.Remove(note);
 

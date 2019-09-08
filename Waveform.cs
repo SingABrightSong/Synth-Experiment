@@ -22,6 +22,8 @@ namespace Synth {
         /// </summary>
         private const double adsrExp = 9d;
 
+        private static Random RND = new Random();
+
         /// <summary>
         /// Attack-Decay-Sustain-Release Envelope
         /// </summary>
@@ -88,6 +90,21 @@ namespace Synth {
         /// <returns>The air pressure value (between -1 and 1) at the specified time.</returns>
         public static double Sine(double time, double frequency) {
             return Math.Sin(time * frequency * Math.PI * 2d);
+        }
+
+        public static double Square(double time, double frequency) {
+            return ((int)(time * frequency) % 2) * 2 - 1;
+        }
+
+        public static double Sawtooth(double time, double frequency) {
+            var periods = time * frequency;
+            var fractional = periods - Math.Floor(periods);
+
+            return fractional * 2 - 1;
+        }
+
+        public static double Noise() {
+            return RND.NextDouble() * 2 - 1;
         }
     }
 }
