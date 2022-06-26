@@ -92,14 +92,19 @@ namespace Synth {
             return Math.Sin(time * frequency * Math.PI * 2d);
         }
 
-        public static double Cosine(double time, double frequency) {
-            return Math.Cos(time * frequency * Math.PI * 2d);
-        }
+        ///public static double Cosine(double time, double frequency) {
+        ///    return Math.Cos(time * frequency * Math.PI * 2d);
+        ///}
+        
+        ///Cosine wave is just a phase-shifted sine wave
 
-        public static double SemiSine(double time, double frequency) {
-            return Math.Abs(Math.Sin(time * frequency * Math.PI)) * 2d - 1d;
-        }
-
+        /// public static double SemiSine(double time, double frequency) {
+        ///     return Math.Abs(Math.Sin(time * frequency * Math.PI)) * 2d - 1d;
+        ///}
+        
+        ///Defined later in terms of the saw wave
+        
+        
         /// <summary>
         /// Square waveform
         /// </summary>
@@ -143,5 +148,10 @@ namespace Synth {
 
             return t * 4d;
         }
+        public static double SemiSine(double time, double frequency) {
+            var saw = Sawtooth(time, frequency);
+            return saw * saw;
+        }
+
     }
 }
